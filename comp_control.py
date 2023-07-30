@@ -31,6 +31,7 @@ from tkinter import X
 from unittest.util import strclass
 import serial
 import config
+from pressure import Pressure
 
 
 
@@ -39,6 +40,11 @@ root = Tk()
 #root.geometry("1366x760")
 root.attributes('-fullscreen', True)
 root.config(cursor='none')
+channels = range(1,5)
+global press
+press= Pressure(channels=channels,offsets=[0.481845,0.481845,0.481845,0.481845],
+                     scales=[25.941952,25.941952,25.941952,25.941952])
+
 
 global T1,T2,T3,T4,T5 #temp1_txt
 T1= 0.0
@@ -371,27 +377,36 @@ car_filling_status.place(x=1100,y=670)
 data_frame_no=Label(frame1,font=("Arial Bold",14),textvariable=data_frame_no_txt)
 data_frame_no.place(x=1100,y=720)
 
+def make_label(frame,text,x,y):
+    alabel=Label(frame,font=("Arial Bold",14),text=text)
+    alabel.place(x=x,y=y)
+    return alabel
+
 
 #temperature and pressure display lables
 temp1_display=Label(frame1,font=("Arial Bold",14),text="Temp: "+str(T1)+u'\u00b0'+'C')
 temp1_display.place(x=100,y=570)
-P1_display=Label(frame1,font=("Arial Bold",14),text="Pressure: " +str(P1)+" Bar")
-P1_display.place(x=100,y=620)
+P_display =[]
+
+P_display[0]=make_label(frame1,text="Pressure:  ***** Bar",x=100,y=620)
+P_display[1]=make_label(frame1,text="Pressure:  ***** Bar",x=360,y=620)
+P_display[2]=make_label(frame1,text="Pressure:  ***** Bar",x=620,y=620)
+P_display[3]=make_label(frame1,text="Pressure:  ***** Bar",x=880,y=620)
+
 
 temp2_display=Label(frame1,font=("Arial Bold",14),text="Temp: "+str(T2)+u'\u00b0'+'C')
 temp2_display.place(x=360,y=570)
-P2_display=Label(frame1,font=("Arial Bold",14),text="Pressure: " +str(P2)+" Bar")
-P2_display.place(x=360,y=620)
+
 
 temp3_display=Label(frame1,font=("Arial Bold",14),text="Temp: "+str(T3)+u'\u00b0'+'C')
 temp3_display.place(x=620,y=570)
 P3_display=Label(frame1,font=("Arial Bold",14),text="Pressure: " +str(P3)+" Bar")
-P3_display.place(x=620,y=620)
+P3_display.place()
 
 temp4_display=Label(frame1,font=("Arial Bold",14),text="Temp: "+str(T4)+u'\u00b0'+'C')
 temp4_display.place(x=880,y=570)
 P4_display=Label(frame1,font=("Arial Bold",14),text="Pressure: " +str(P4)+" Bar")
-P4_display.place(x=880,y=620)
+P4_display.place()
 
 
 #CRC check function
@@ -514,43 +529,10 @@ def get_car_data():
 
 #read ADC & calculate pressures
 def get_pressures():
-    global P1,P2,P3,P4,P1_zero,P1_cal,P2_zero,P2_cal,P3_zero,P3_cal,P4_zero,P4_cal
-    adc = ADCPi(0x68, 0x69,12)
-
-    v1=adc.read_voltage(1)
-   # print("V0lts = "+str(v1))
-    P1 = (v1-P1_zero)*P1_cal
-    P1 = round(P1,1)
-    #if pressure < -5, sensor or loop is faulty
-    if P1 < -5:
-        P1_display.config(text="P Sensor FAULTY")
-    else:
-        P1_display.config(text="Pressure: " +str(P1)+" Bar")
-
-    v2=adc.read_voltage(2)
-    P2 = (v2-P2_zero)*P2_cal
-    P2 = round(P2,1)
-    if P2 < -5:
-        P2_display.config(text="P Sensor FAULTY")
-    else:
-        P2_display.config(text="Pressure: " +str(P2)+" Bar")
-
-    v3=adc.read_voltage(3)
-    P3 = (v3-P3_zero)*P3_cal
-    P3 = round(P3,1)
-    if P3 < -5:
-        P3_display.config(text="P Sensor FAULTY")
-    else:
-        P3_display.config(text="Pressure: " +str(P3)+" Bar")
-
-    v4=adc.read_voltage(4)
-    P4 = (v4-P4_zero)*P4_cal
-    P4 = round(P4,1)
-    if P4 < -5:
-        P4_display.config(text="P Sensor FAULTY")
-    else:
-        P4_display.config(text="Pressure: " +str(P4)+" Bar")
-     
+    global press
+    press.read_presures()
+    for index in range(0,len(press.channels)):
+        P_display[index].config(press.get_pressure_string(index))
     root.after(1000,get_pressures)
 
 #get temperatures from i2c bus
