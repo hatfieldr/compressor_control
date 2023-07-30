@@ -31,7 +31,8 @@ from tkinter import X
 from unittest.util import strclass
 import serial
 import config
-from pressure import Pressure
+from sensors import Pressure
+from sensors import Temp
 
 
 
