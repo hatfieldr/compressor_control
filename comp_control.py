@@ -532,7 +532,7 @@ def get_pressures():
     global press
     press.read_presures()
     for index in range(0,len(press.channels)):
-        P_display[index].config(press.get_pressure_string(index))
+        P_display[index].config(text=press.get_pressure_string(index))
     root.after(1000,get_pressures)
 
 #get temperatures from i2c bus
